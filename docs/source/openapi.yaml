@@ -1,0 +1,1163 @@
+openapi: 3.1.0
+
+info:
+  title: CivitAI API
+  version: v1
+  description: >
+    Unofficial OpenAPI specification for the CivitAI v1 REST API.
+    Authentication is optional for most endpoints; vault and /me require it.
+
+
+    [← Python SDK docs](https://mcriley821.github.io/civitai-api/)
+
+servers:
+  - url: https://civitai.com/api/v1
+
+security: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: >
+        API key or OAuth2 access token. Set the CIVITAI_API_KEY environment
+        variable or pass the token directly as a Bearer token.
+
+  schemas:
+
+    # ── Enums ──────────────────────────────────────────────────────────────────
+
+    ModelType:
+      type: string
+      enum:
+        - Checkpoint
+        - TextualInversion
+        - Hypernetwork
+        - AestheticGradient
+        - LORA
+        - LoCon
+        - DoRA
+        - Controlnet
+        - Upscaler
+        - MotionModule
+        - VAE
+        - Poses
+        - Wildcards
+        - Workflows
+        - Detection
+        - Other
+
+    BaseModel:
+      type: string
+      enum:
+        - SD 1.4
+        - SD 1.5
+        - SD 1.5 LCM
+        - SD 1.5 Hyper
+        - SD 2.0
+        - SD 2.0 768
+        - SD 2.1
+        - SD 2.1 768
+        - SD 2.1 Unclip
+        - SDXL 0.9
+        - SDXL 1.0
+        - SDXL 1.0 LCM
+        - SDXL Distilled
+        - SDXL Turbo
+        - SDXL Lightning
+        - SDXL Hyper
+        - Pony
+        - Flux.1 S
+        - Flux.1 D
+        - AuraFlow
+        - AURAFLOW
+        - Illustrious
+        - Mochi
+        - LTXV
+        - CogVideoX
+        - HunyuanVideo
+        - Wan Video
+        - Other
+        - Unknown
+
+    ModelSort:
+      type: string
+      enum:
+        - Highest Rated
+        - Most Downloaded
+        - Newest
+        - Most Discussed
+        - Most Liked
+        - Most Collected
+        - Most Images
+        - New Team
+        - Oldest
+
+    Period:
+      type: string
+      enum:
+        - AllTime
+        - Year
+        - Month
+        - Week
+        - Day
+
+    ImageSort:
+      type: string
+      enum:
+        - Most Reactions
+        - Most Comments
+        - Newest
+        - Oldest
+
+    NsfwLevel:
+      type: string
+      enum:
+        - None
+        - Soft
+        - Mature
+        - X
+
+    CommercialUse:
+      type: string
+      enum:
+        - None
+        - Image
+        - Rent
+        - Sell
+
+    # ── Pagination ─────────────────────────────────────────────────────────────
+
+    PageMetadata:
+      type: object
+      additionalProperties: true
+      properties:
+        totalItems:
+          type: integer
+          nullable: true
+        currentPage:
+          type: integer
+          nullable: true
+        pageSize:
+          type: integer
+          nullable: true
+        totalPages:
+          type: integer
+          nullable: true
+        nextPage:
+          type: string
+          nullable: true
+        nextCursor:
+          type: string
+          nullable: true
+
+    # ── Model resource schemas ─────────────────────────────────────────────────
+
+    ModelStats:
+      type: object
+      additionalProperties: true
+      properties:
+        downloadCount:
+          type: integer
+          default: 0
+        favoriteCount:
+          type: integer
+          default: 0
+        thumbsUpCount:
+          type: integer
+          default: 0
+        thumbsDownCount:
+          type: integer
+          default: 0
+        commentCount:
+          type: integer
+          default: 0
+        ratingCount:
+          type: integer
+          default: 0
+        rating:
+          type: number
+          format: float
+          default: 0.0
+        tippedAmountCount:
+          type: integer
+          default: 0
+
+    ModelVersionStats:
+      type: object
+      additionalProperties: true
+      properties:
+        downloadCount:
+          type: integer
+          default: 0
+        ratingCount:
+          type: integer
+          default: 0
+        rating:
+          type: number
+          format: float
+          default: 0.0
+        thumbsUpCount:
+          type: integer
+          default: 0
+        thumbsDownCount:
+          type: integer
+          default: 0
+
+    ModelFile:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - name
+        - downloadUrl
+      properties:
+        id:
+          type: integer
+        sizeKb:
+          type: number
+          format: float
+          nullable: true
+        name:
+          type: string
+        type:
+          type: string
+          nullable: true
+        pickleScanResult:
+          type: string
+          nullable: true
+        pickleScanMessage:
+          type: string
+          nullable: true
+        virusScanResult:
+          type: string
+          nullable: true
+        scannedAt:
+          type: string
+          nullable: true
+        primary:
+          type: boolean
+          nullable: true
+        downloadUrl:
+          type: string
+
+    ModelVersionFile:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - name
+        - downloadUrl
+      properties:
+        id:
+          type: integer
+        sizeKb:
+          type: number
+          format: float
+          nullable: true
+        name:
+          type: string
+        type:
+          type: string
+          nullable: true
+        primary:
+          type: boolean
+          nullable: true
+        downloadUrl:
+          type: string
+        hashes:
+          type: object
+          additionalProperties:
+            type: string
+          default: {}
+
+    ModelImage:
+      type: object
+      additionalProperties: true
+      required:
+        - url
+      properties:
+        id:
+          type: integer
+          nullable: true
+        url:
+          type: string
+        nsfw:
+          oneOf:
+            - type: boolean
+            - type: string
+          nullable: true
+        width:
+          type: integer
+          nullable: true
+        height:
+          type: integer
+          nullable: true
+        hash:
+          type: string
+          nullable: true
+        meta:
+          type: object
+          additionalProperties: true
+          nullable: true
+
+    ModelCreator:
+      type: object
+      additionalProperties: true
+      required:
+        - username
+      properties:
+        username:
+          type: string
+        image:
+          type: string
+          nullable: true
+
+    ModelVersion:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        modelId:
+          type: integer
+          nullable: true
+        name:
+          type: string
+        createdAt:
+          type: string
+          nullable: true
+        updatedAt:
+          type: string
+          nullable: true
+        trainedWords:
+          type: array
+          items:
+            type: string
+          default: []
+        baseModel:
+          oneOf:
+            - $ref: '#/components/schemas/BaseModel'
+            - type: string
+          nullable: true
+        earlyAccessTimeFrame:
+          type: integer
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        stats:
+          $ref: '#/components/schemas/ModelVersionStats'
+          nullable: true
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelVersionFile'
+          default: []
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelImage'
+          default: []
+        downloadUrl:
+          type: string
+          nullable: true
+
+    Model:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          oneOf:
+            - $ref: '#/components/schemas/ModelType'
+            - type: string
+        poi:
+          type: boolean
+          default: false
+        nsfw:
+          type: boolean
+          default: false
+        allowNoCredit:
+          type: boolean
+          default: true
+        allowCommercialUse:
+          oneOf:
+            - $ref: '#/components/schemas/CommercialUse'
+            - type: array
+              items:
+                $ref: '#/components/schemas/CommercialUse'
+            - type: string
+          nullable: true
+        allowDerivatives:
+          type: boolean
+          default: true
+        allowDifferentLicense:
+          type: boolean
+          default: true
+        stats:
+          $ref: '#/components/schemas/ModelStats'
+          nullable: true
+        creator:
+          $ref: '#/components/schemas/ModelCreator'
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+          default: []
+        modelVersions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelVersion'
+          default: []
+
+    ModelPage:
+      type: object
+      additionalProperties: true
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Model'
+        metadata:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # ── Creator resource schemas ───────────────────────────────────────────────
+
+    Creator:
+      type: object
+      additionalProperties: true
+      required:
+        - username
+      properties:
+        username:
+          type: string
+        modelCount:
+          type: integer
+          nullable: true
+        link:
+          type: string
+          nullable: true
+        image:
+          type: string
+          nullable: true
+
+    CreatorPage:
+      type: object
+      additionalProperties: true
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Creator'
+        metadata:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # ── Image resource schemas ─────────────────────────────────────────────────
+
+    ImageMeta:
+      type: object
+      additionalProperties: true
+      properties:
+        prompt:
+          type: string
+          nullable: true
+        negativePrompt:
+          type: string
+          nullable: true
+        cfgScale:
+          type: number
+          format: float
+          nullable: true
+        steps:
+          type: integer
+          nullable: true
+        sampler:
+          type: string
+          nullable: true
+        seed:
+          type: integer
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        clipSkip:
+          type: integer
+          nullable: true
+
+    Image:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - url
+      properties:
+        id:
+          type: integer
+        url:
+          type: string
+        hash:
+          type: string
+          nullable: true
+        width:
+          type: integer
+          nullable: true
+        height:
+          type: integer
+          nullable: true
+        nsfw:
+          oneOf:
+            - type: boolean
+            - type: string
+          nullable: true
+        nsfwLevel:
+          oneOf:
+            - $ref: '#/components/schemas/NsfwLevel'
+            - type: string
+          nullable: true
+        createdAt:
+          type: string
+          nullable: true
+        postId:
+          type: integer
+          nullable: true
+        stats:
+          type: object
+          additionalProperties: true
+          nullable: true
+        meta:
+          oneOf:
+            - $ref: '#/components/schemas/ImageMeta'
+            - type: object
+              additionalProperties: true
+          nullable: true
+        username:
+          type: string
+          nullable: true
+
+    ImagePage:
+      type: object
+      additionalProperties: true
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        metadata:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # ── Tag resource schemas ───────────────────────────────────────────────────
+
+    Tag:
+      type: object
+      additionalProperties: true
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        modelCount:
+          type: integer
+          nullable: true
+        link:
+          type: string
+          nullable: true
+
+    TagPage:
+      type: object
+      additionalProperties: true
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        metadata:
+          $ref: '#/components/schemas/PageMetadata'
+
+    # ── User resource schemas ──────────────────────────────────────────────────
+
+    User:
+      type: object
+      additionalProperties: true
+      required:
+        - username
+      properties:
+        id:
+          type: integer
+          nullable: true
+        username:
+          type: string
+        email:
+          type: string
+          nullable: true
+        image:
+          type: string
+          nullable: true
+        stats:
+          type: object
+          additionalProperties:
+            type: integer
+          nullable: true
+
+    Me:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          additionalProperties: true
+          properties:
+            blurNsfw:
+              type: boolean
+              nullable: true
+            nsfw:
+              type: boolean
+              nullable: true
+
+    # ── Vault resource schemas ─────────────────────────────────────────────────
+
+    VaultItem:
+      type: object
+      additionalProperties: true
+      required:
+        - modelVersionId
+      properties:
+        vaultItemId:
+          type: integer
+          nullable: true
+        modelVersionId:
+          type: integer
+        modelId:
+          type: integer
+          nullable: true
+        modelName:
+          type: string
+          nullable: true
+        versionName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          nullable: true
+        filesDownloadedAt:
+          type: string
+          nullable: true
+        filesSizeKb:
+          type: number
+          format: float
+          nullable: true
+
+    VaultStatus:
+      type: object
+      additionalProperties: true
+      properties:
+        storageUsed:
+          type: integer
+          nullable: true
+        storageLimit:
+          type: integer
+          nullable: true
+        usedStorageKb:
+          type: number
+          format: float
+          nullable: true
+        createdAt:
+          type: string
+          nullable: true
+
+    VaultItemPage:
+      type: object
+      additionalProperties: true
+      required:
+        - items
+        - metadata
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VaultItem'
+        metadata:
+          $ref: '#/components/schemas/PageMetadata'
+
+# ── Paths ──────────────────────────────────────────────────────────────────────
+
+paths:
+
+  /enums:
+    get:
+      operationId: listEnums
+      summary: List available enumeration values
+      tags:
+        - enums
+      responses:
+        '200':
+          description: Enumeration values keyed by enum name
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /creators:
+    get:
+      operationId: listCreators
+      summary: List creators
+      tags:
+        - creators
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of creators
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatorPage'
+
+  /models:
+    get:
+      operationId: listModels
+      summary: List models
+      tags:
+        - models
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: tag
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+        - name: username
+          in: query
+          schema:
+            type: string
+        - name: types
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ModelType'
+          style: form
+          explode: true
+        - name: sort
+          in: query
+          schema:
+            $ref: '#/components/schemas/ModelSort'
+        - name: period
+          in: query
+          schema:
+            $ref: '#/components/schemas/Period'
+        - name: rating
+          in: query
+          schema:
+            type: integer
+        - name: favorites
+          in: query
+          schema:
+            type: boolean
+        - name: hidden
+          in: query
+          schema:
+            type: boolean
+        - name: primaryFileOnly
+          in: query
+          schema:
+            type: boolean
+        - name: allowNoCredit
+          in: query
+          schema:
+            type: boolean
+        - name: allowDerivatives
+          in: query
+          schema:
+            type: boolean
+        - name: allowDifferentLicense
+          in: query
+          schema:
+            type: boolean
+        - name: allowCommercialUse
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/CommercialUse'
+          style: form
+          explode: true
+        - name: nsfw
+          in: query
+          schema:
+            type: boolean
+        - name: poi
+          in: query
+          schema:
+            type: boolean
+        - name: baseModels
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/BaseModel'
+          style: form
+          explode: true
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of models
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelPage'
+
+  /models/{id}:
+    get:
+      operationId: getModel
+      summary: Retrieve a model by ID
+      tags:
+        - models
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Model object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Model'
+        '404':
+          description: Model not found
+
+  /model-versions/{id}:
+    get:
+      operationId: getModelVersion
+      summary: Retrieve a model version by ID
+      tags:
+        - model-versions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: ModelVersion object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelVersion'
+        '404':
+          description: Model version not found
+
+  /model-versions/by-hash/{hash}:
+    get:
+      operationId: getModelVersionByHash
+      summary: Retrieve a model version by file hash
+      tags:
+        - model-versions
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema:
+            type: string
+          description: File hash (any algorithm — SHA256, AutoV2, CRC32, etc.)
+      responses:
+        '200':
+          description: ModelVersion object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelVersion'
+        '404':
+          description: No model version found for hash
+
+  /model-versions/by-hash:
+    post:
+      operationId: getModelVersionsByHashBatch
+      summary: Retrieve multiple model versions by file hashes (batch)
+      tags:
+        - model-versions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              description: List of file hashes
+      responses:
+        '200':
+          description: List of matching ModelVersion objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelVersion'
+
+  /images:
+    get:
+      operationId: listImages
+      summary: List images
+      tags:
+        - images
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: postId
+          in: query
+          schema:
+            type: integer
+        - name: modelId
+          in: query
+          schema:
+            type: integer
+        - name: modelVersionId
+          in: query
+          schema:
+            type: integer
+        - name: username
+          in: query
+          schema:
+            type: string
+        - name: nsfw
+          in: query
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/NsfwLevel'
+              - type: boolean
+        - name: sort
+          in: query
+          schema:
+            $ref: '#/components/schemas/ImageSort'
+        - name: period
+          in: query
+          schema:
+            $ref: '#/components/schemas/Period'
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of images
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImagePage'
+
+  /tags:
+    get:
+      operationId: listTags
+      summary: List tags
+      tags:
+        - tags
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: query
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of tags
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagPage'
+
+  /users/{username}:
+    get:
+      operationId: getUser
+      summary: Retrieve a user by username
+      tags:
+        - users
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+
+  /me:
+    get:
+      operationId: getCurrentUser
+      summary: Retrieve the currently authenticated user
+      tags:
+        - users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401':
+          description: Not authenticated
+
+  /vault/get:
+    get:
+      operationId: getVaultStatus
+      summary: Retrieve vault storage status for the authenticated user
+      tags:
+        - vault
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Vault storage status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VaultStatus'
+        '401':
+          description: Not authenticated
+
+  /vault/all:
+    get:
+      operationId: listVaultItems
+      summary: List vault items for the authenticated user
+      tags:
+        - vault
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated list of vault items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VaultItemPage'
+        '401':
+          description: Not authenticated
+
+  /vault/toggle-version/{modelVersionId}:
+    post:
+      operationId: toggleVaultVersion
+      summary: Add or remove a model version from the vault
+      tags:
+        - vault
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: modelVersionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Toggle result
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401':
+          description: Not authenticated

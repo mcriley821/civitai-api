@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -e
+
+uv sync --all-extras
+
+# Stash unstaged/untracked changes so the check runs against only what's staged
+git stash --quiet --keep-index --include-untracked
+trap 'git stash pop --quiet' EXIT
+
+uv run poe check

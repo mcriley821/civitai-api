@@ -1,0 +1,100 @@
+[build-system]
+requires = ["uv_build>=0.11.19,<0.12"]
+build-backend = "uv_build"
+
+[project]
+name = "py-civitai-api"
+version = "0.0.0"
+description = "Unofficial Python client for the CivitAI API (sync + async)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12"
+keywords = ["civitai", "api", "sdk", "stable-diffusion", "ai", "image-generation"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+dependencies = [
+    "httpx>=0.28",
+    "pydantic>=2.13",
+    "typing-extensions>=4.15",
+]
+
+[project.optional-dependencies]
+cli = ["typer>=0.26.7", "rich>=15", "jmespath>=1.1"]
+dev = [
+    "pytest>=9",
+    "pytest-asyncio>=1.4",
+    "pytest-cov>=7.1.0",
+    "respx>=0.23",
+    "ruff>=0.15.15",
+    "poethepoet>=0.46",
+    "mypy>=2.1.0",
+    "types-jmespath>=1.1",
+    "typer>=0.26.7",
+    "jmespath>=1.1",
+]
+docs = [
+    "sphinx>=8",
+    "furo>=2024",
+    "myst-parser>=4",
+]
+
+[project.scripts]
+civitai = "civitai_api.cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/mcriley821/civitai-api"
+Repository = "https://github.com/mcriley821/civitai-api"
+"Bug Tracker" = "https://github.com/mcriley821/civitai-api/issues"
+
+[tool.uv]
+package = true
+
+[tool.uv.build-backend]
+module-name = "civitai_api"
+
+[tool.ruff]
+src = ["src"]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["PLR0913", "COM812"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S106"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.poe.tasks]
+lint = "ruff check src tests"
+format = "ruff format src tests"
+typecheck = "mypy src"
+test = "pytest tests/"
+coverage = "pytest --cov-report=term-missing --cov=civitai_api tests/"
+coverage-ci = "pytest --cov-report=xml --cov=civitai_api --cov-branch tests/"
+install-hooks = "cp scripts/pre-commit .git/hooks/pre-commit"
+docs = "sphinx-build -b html docs/source docs/build/html"
+
+[tool.poe.tasks.docs-clean]
+shell = "rm -rf docs/build"
+
+[tool.poe.tasks.check]
+sequence = ["lint", "typecheck", "test"]

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title|striptags|e }} — {{ docstitle|e }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    #back-to-docs {
+      position: fixed;
+      top: 12px;
+      right: 16px;
+      z-index: 9999;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      padding: 6px 16px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      opacity: .82;
+      transition: opacity .15s;
+    }
+    #back-to-docs:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+  <a id="back-to-docs" href="{{ pathto('index') }}">← Docs</a>
+  <div id="redoc-container"></div>
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  <script>
+    Redoc.init('openapi.yaml', {}, document.getElementById('redoc-container'));
+  </script>
+</body>
+</html>
