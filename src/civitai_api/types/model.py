@@ -2,33 +2,33 @@
 
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
-from ._base import _CivitAIModel
+from ._base import _CivitAIModel, _none_to_default
 from .enums import BaseModel, CommercialUse, ModelType
 
 
 class ModelStats(_CivitAIModel):
     """Aggregate statistics for a model."""
 
-    download_count: int = 0
-    favorite_count: int = 0
-    thumbs_up_count: int = 0
-    thumbs_down_count: int = 0
-    comment_count: int = 0
-    rating_count: int = 0
-    rating: float = 0.0
-    tipped_amount_count: int = 0
+    download_count: int | None = None
+    favorite_count: int | None = None
+    thumbs_up_count: int | None = None
+    thumbs_down_count: int | None = None
+    comment_count: int | None = None
+    rating_count: int | None = None
+    rating: float | None = None
+    tipped_amount_count: int | None = None
 
 
 class ModelVersionStats(_CivitAIModel):
     """Aggregate statistics for a model version."""
 
-    download_count: int = 0
-    rating_count: int = 0
-    rating: float = 0.0
-    thumbs_up_count: int = 0
-    thumbs_down_count: int = 0
+    download_count: int | None = None
+    rating_count: int | None = None
+    rating: float | None = None
+    thumbs_up_count: int | None = None
+    thumbs_down_count: int | None = None
 
 
 class ModelFile(_CivitAIModel):
@@ -69,6 +69,8 @@ class ModelVersionFile(_CivitAIModel):
     download_url: str
     hashes: dict[str, str] = Field(default_factory=dict)
 
+    _hashes_null = field_validator("hashes", mode="before")(_none_to_default(dict))
+
 
 class ModelVersion(_CivitAIModel):
     """A specific version of a model."""
@@ -87,6 +89,10 @@ class ModelVersion(_CivitAIModel):
     images: list[ModelImage] = Field(default_factory=list)
     download_url: str | None = None
 
+    _lists_null = field_validator("trained_words", "files", "images", mode="before")(
+        _none_to_default(list),
+    )
+
 
 class Creator(_CivitAIModel):
     """Minimal creator info embedded in a ``Model`` response."""
@@ -102,13 +108,17 @@ class Model(_CivitAIModel):
     name: str
     description: str | None = None
     type: ModelType | str
-    poi: bool = False
-    nsfw: bool = False
-    allow_no_credit: bool = True
+    poi: bool | None = False
+    nsfw: bool | None = False
+    allow_no_credit: bool | None = True
     allow_commercial_use: CommercialUse | str | list[CommercialUse | str] | None = None
-    allow_derivatives: bool = True
-    allow_different_license: bool = True
+    allow_derivatives: bool | None = True
+    allow_different_license: bool | None = True
     stats: ModelStats | None = None
     creator: Creator | None = None
     tags: list[str] = Field(default_factory=list)
     model_versions: list[ModelVersion] = Field(default_factory=list)
+
+    _lists_null = field_validator("tags", "model_versions", mode="before")(
+        _none_to_default(list),
+    )

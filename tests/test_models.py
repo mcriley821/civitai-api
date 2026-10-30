@@ -149,3 +149,62 @@ def test_models_retrieve_unknown_allow_commercial_use_parses(
     )
     model = client.models.retrieve(1)
     assert model.allow_commercial_use == value
+
+
+def test_models_list_tolerates_null_stats_and_collections(
+    client: CivitAI,
+    civitai_mock: MockRouter,
+) -> None:
+    """A page with null stats counters and null collections still parses (#45)."""
+    version = {
+        "id": 10,
+        "name": "v1",
+        "trainedWords": None,
+        "files": None,
+        "images": None,
+        "stats": {
+            "downloadCount": None,
+            "ratingCount": None,
+            "rating": None,
+            "thumbsUpCount": None,
+            "thumbsDownCount": None,
+        },
+    }
+    bad = {
+        **MODEL_FIXTURE,
+        "poi": None,
+        "nsfw": None,
+        "allowNoCredit": None,
+        "allowDerivatives": None,
+        "allowDifferentLicense": None,
+        "tags": None,
+        "modelVersions": [version],
+        "stats": {
+            "downloadCount": 0,
+            "favoriteCount": None,
+            "thumbsUpCount": None,
+            "thumbsDownCount": None,
+            "commentCount": None,
+            "ratingCount": None,
+            "rating": None,
+            "tippedAmountCount": None,
+        },
+    }
+    good = {**MODEL_FIXTURE, "id": 2}
+    page = {**PAGE_FIXTURE, "items": [bad, good]}
+    civitai_mock.get("/models").mock(return_value=httpx.Response(200, json=page))
+
+    items = client.models.list(types="Checkpoint", sort="Newest").items
+
+    assert [m.id for m in items] == [1, 2]
+    assert items[0].stats is not None
+    assert items[0].stats.tipped_amount_count is None
+    assert items[0].stats.download_count == 0
+    assert items[0].tags == []
+    assert items[0].poi is None
+    v = items[0].model_versions[0]
+    assert v.stats is not None
+    assert v.stats.rating is None
+    assert v.trained_words == []
+    assert v.files == []
+    assert v.images == []
