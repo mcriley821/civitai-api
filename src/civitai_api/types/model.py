@@ -105,7 +105,7 @@ class Model(_CivitAIModel):
     poi: bool = False
     nsfw: bool = False
     allow_no_credit: bool = True
-    allow_commercial_use: CommercialUse | list[CommercialUse] | str | None = None
+    allow_commercial_use: CommercialUse | str | list[CommercialUse | str] | None = None
     allow_derivatives: bool = True
     allow_different_license: bool = True
     stats: ModelStats | None = None

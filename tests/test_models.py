@@ -129,3 +129,23 @@ async def test_async_models_list(
     )
     page = await async_client.models.list()
     assert len(page.items) == 1
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        ["Image", "RentCivit", "Rent", "Sell", "SellMerge"],
+        ["Image", "SomeFutureValue"],
+        "SellMerge",
+        "None",
+    ],
+)
+def test_models_retrieve_unknown_allow_commercial_use_parses(
+    client: CivitAI, civitai_mock: MockRouter, value: str | list[str]
+) -> None:
+    """Unknown/new allowCommercialUse values (scalar or list) must not fail parsing."""
+    civitai_mock.get("/models/1").mock(
+        return_value=httpx.Response(200, json={**MODEL_FIXTURE, "allowCommercialUse": value})
+    )
+    model = client.models.retrieve(1)
+    assert model.allow_commercial_use == value

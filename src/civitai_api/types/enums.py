@@ -78,7 +78,7 @@ ImageSort = Literal[
 
 NsfwLevel = Literal["None", "Soft", "Mature", "X"]
 
-CommercialUse = Literal["None", "Image", "Rent", "Sell"]
+CommercialUse = Literal["None", "Image", "RentCivit", "Rent", "Sell", "SellMerge"]
 
 SchedulerType = Literal[
     "Euler",
